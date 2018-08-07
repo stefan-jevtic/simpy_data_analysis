@@ -2,4 +2,4 @@ from Analysis.Analysis import Analysis
 
 
 a = Analysis()
-a.overallNumber()
+a.overallNumber(12)
