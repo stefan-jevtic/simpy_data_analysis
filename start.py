@@ -1,5 +1,7 @@
+import sys
 from Analysis.Analysis import Analysis
 
-
-a = Analysis()
-a.placementAnalysis(2)
+shop_id = sys.argv[1]
+a = Analysis(shop_id)
+a.overallNumber()
+a.placementAnalysis()
