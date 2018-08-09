@@ -39,14 +39,29 @@ class Analysis:
         print('------------------------------------------')
 
     def placementAnalysis(self):
+        num_placements_active = len(self.active.placement.unique())
+        num_placements_by_date = np.array([len(self.inactive.placement.unique()) for date in self.dates])
+        num_placements_by_date = np.append(num_placements_by_date, num_placements_active)
+        diff = np.diff(num_placements_by_date)
+        num_placements_frame = pd.DataFrame(num_placements_by_date,
+                                            index=[date for date in self.frame['t_val_from'].dt.date.unique()],
+                                            columns=['Number of placements'])
+
         preview_matrix = []
         for date in self.frame['t_val_from'].dt.date.unique():
             preview_matrix.append([len(a) for a in [self.frame[(self.frame.placement == placement) & (self.frame.t_val_from.dt.date == date)] for placement in self.frame.placement.unique()]])
         matrix = []
         preview_frame = pd.DataFrame(preview_matrix, columns=[placement for placement in self.frame.placement.unique()],
                                      index=[date for date in self.frame['t_val_from'].dt.date.unique()])
-        for date in self.dates:
-            matrix.append([len(a) for a in [self.inactive[(self.inactive.placement == placement) & (self.inactive.t_val_from.dt.date == date)] for placement in self.inactive.placement.unique()]])
+        if diff[-1] > 0:
+            for date in self.dates:
+                matrix.append(np.concatenate([[len(a) for a in [self.inactive[(self.inactive.placement == placement) & (self.inactive.t_val_from.dt.date == date)] for placement in self.inactive.placement.unique()]], np.zeros(diff[-1], int)]))
+        else:
+            for date in self.dates:
+                matrix.append([len(a) for a in [
+                    self.inactive[(self.inactive.placement == placement) & (self.inactive.t_val_from.dt.date == date)]
+                    for placement in self.inactive.placement.unique()]])
+
         matrix = np.array(matrix)
         active_placements = np.array(
             [len(a) for a in [self.active[self.active.placement == placement] for placement in self.active.placement.unique()]])
@@ -54,12 +69,7 @@ class Analysis:
         for arr in matrix:
             diff_matrix.append(self.diffPerc(arr, active_placements))
         diff_matrix = np.array(diff_matrix)
-        diff_table = pd.DataFrame(diff_matrix, columns=[placement for placement in self.inactive.placement.unique()], index=[date for date in self.dates])
-        num_placements_active = len(self.active.placement.unique())
-        num_placements_by_date = np.array([len(self.inactive.placement.unique()) for date in self.dates])
-        num_placements_by_date = np.append(num_placements_by_date, num_placements_active)
-        diff = np.diff(num_placements_by_date)
-        num_placements_frame = pd.DataFrame(num_placements_by_date, index=[date for date in self.frame['t_val_from'].dt.date.unique()], columns=['Number of placements'])
+        diff_table = pd.DataFrame(diff_matrix, columns=[placement for placement in self.active.placement.unique()], index=[date for date in self.dates])
         print('======================> Current state for last 6 crawlers <======================')
         print(preview_frame)
         print('------------------------------------------')
