@@ -41,7 +41,7 @@ class Analysis:
 
     def placementAnalysis(self):
         num_placements_active = len(self.active.placement.unique())
-        num_placements_by_date = np.array([len(self.inactive.placement.unique()) for date in self.dates])
+        num_placements_by_date = np.array([len(self.inactive[self.inactive['t_val_from'].dt.date == date].placement.unique()) for date in self.dates])
         num_placements_by_date = np.append(num_placements_by_date, num_placements_active)
         diff = np.diff(num_placements_by_date)
         num_placements_frame = pd.DataFrame(num_placements_by_date,
