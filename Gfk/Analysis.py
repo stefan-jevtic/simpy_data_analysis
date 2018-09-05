@@ -4,7 +4,7 @@ from numpy import inf
 from Server.DB import DB
 
 
-class Analysis:
+class GfkAnalysis:
 
     def __init__(self, shop_id):
         self.db = DB()
