@@ -8,9 +8,9 @@ class DB:
                                            database='smile')
         self.cursor = self.cnx.cursor()
 
-    def lastFive(self, shop_id):
-        q = ('select * from gkf_home_banners where shop_id = %s and date(t_val_from) in (select * from (select date(t_val_from) as datum from gkf_home_banners group by datum order by datum desc limit 6) as t)')
-        self.cursor.execute(q, (shop_id,))
+    def lastFive(self):
+        q = ('select * from gkf_home_banners where date(t_val_from) in (select * from (select date(t_val_from) as datum from gkf_home_banners group by datum order by datum desc limit 6) as t)')
+        self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data
 
@@ -21,7 +21,7 @@ class DB:
         return data
 
     def getKeywords(self):
-        q = ('select * from keyword where t_val_active = 1')
+        q = ('select * from keyword where t_val_active = 1 and keyword_remove = 0 and negative_kws = 0')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data

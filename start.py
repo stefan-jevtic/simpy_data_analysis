@@ -2,26 +2,53 @@ import sys
 from Gfk.Analysis import GfkAnalysis
 from Keywords.Analysis import KeywordsAnalysis
 
-if len(sys.argv) < 3:
+if len(sys.argv) < 2:
     raise ValueError('Please insert the type of analysis!')
 
-shop_id = sys.argv[2]
 type = sys.argv[1]
 
 if type == 'gfk':
-    a = GfkAnalysis(shop_id)
-    a.overallNumber()
-    a.placementAnalysis()
+    a = GfkAnalysis()
+    shop_id = input('Please enter shop id or any other characters to exit: \n')
+    try:
+        shop_id = int(shop_id)
+    except ValueError:
+        print('Bye')
+        sys.exit(1)
+    while True:
+        a.overallNumber(shop_id)
+        a.placementAnalysis(shop_id)
+        shop_id = input('Please enter shop id or any other characters to exit: \n')
+        try:
+            shop_id = int(shop_id)
+        except ValueError:
+            print('Bye')
+            break
+    sys.exit(1)
 
 elif type == 'keywords':
-    a = KeywordsAnalysis(shop_id)
+    a = KeywordsAnalysis()
     a.overallNumber()
-    # a.analysisByShop()
-
+    shop_id = input('Please enter shop id or any other characters to exit: \n')
+    try:
+        shop_id = int(shop_id)
+    except ValueError:
+        print('Bye')
+        sys.exit(1)
+    while True:
+        a.analysisByShop(shop_id)
+        shop_id = input('Please enter shop id or any other characters to exit: \n')
+        try:
+            shop_id = int(shop_id)
+        except ValueError:
+            export = input('Do you want to make an export for all shops? (y|n)')
+            if export == 'y':
+                a.exportExcel()
+            print('Bye')
+            break
+    sys.exit(1)
 elif type == 'category':
-    a = GfkAnalysis(shop_id)
-    a.overallNumber()
-    a.placementAnalysis()
+    print()
 
 else:
     raise ValueError('There is no such type of data analysis!')
