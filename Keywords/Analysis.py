@@ -8,23 +8,24 @@ class KeywordsAnalysis:
 
     def __init__(self):
         self.db = DB()
-        self.data = self.db.getData()
-        self.frame = pd.DataFrame(self.data, columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
+        self.active = pd.DataFrame(self.db.getDataSmile(),  columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
                                                       't_val_to', 't_val_update', 't_val_del', 't_val_active',
                                                       'b_val_from', 'b_val_to'])
-        self.active = self.frame[self.frame.t_val_active == 1]
-        self.inactive = self.frame[self.frame.t_val_active == 0]
+        self.inactive = pd.DataFrame(self.db.getDataSmileTest(), columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
+                                                      't_val_to', 't_val_update', 't_val_del', 't_val_active',
+                                                      'b_val_from', 'b_val_to'])
         self.dates = self.inactive['t_val_from'].dt.date.unique()
         self.keywords = pd.DataFrame(self.db.getKeywords(), columns=['id', 'keyword', 'keyword_remove',
                                                                      'negative_kws', 't_val_from',
                                                                      't_val_to', 't_val_update', 't_val_del',
                                                                      't_val_active', 'b_val_from',
                                                                      'b_val_to'])
-        self.id_shops = self.frame.domain_pzn_id.str.slice(0, 5).unique()
+        self.id_shops = self.active.domain_pzn_id.str.slice(0, 5).unique()
+        self.domains = pd.DataFrame(self.db.getDomains(), columns=['id', 'domain', 'name', 'keywords_link'])
 
     def overallNumber(self):
         print("Differnce in number of inserted product: {0} and by percentage {1}%".format(
-            (len(self.active)-len(self.inactive)), round(self.diffPerc(len(self.inactive), len(self.active)), 3)
+            (len(self.active)-len(self.inactive[self.inactive.t_val_active == 1])), round(self.diffPerc(len(self.inactive[self.inactive.t_val_active == 1]), len(self.active)), 3)
         ))
         inactive_keywords = self.inactive['keyword_id'].unique()
         active_keywords = self.active['keyword_id'].unique()
@@ -36,23 +37,27 @@ class KeywordsAnalysis:
         mask = np.in1d(inactive_keywords, active_keywords, invert=True)
         all_mask = np.in1d(self.keywords.id, active_keywords, invert=True)
         overall_missing = self.keywords[all_mask][['id', 'keyword']]
-        print(overall_missing)
+        if overall_missing.empty:
+            print('There is no missing keywords this time for all active keywords! Bravo Obade!!!11\n\n')
+        else:
+            print('Keywords not included in last scrape for all active keywords: ')
+            print(overall_missing)
         missing_kws = self.keywords[self.keywords.id.isin(inactive_keywords[mask])][['id', 'keyword']]
         if missing_kws.empty:
             print('There is no missing keywords this time! Bravo Obade!!!11\n\n')
         else:
-            print('Keywords not included in last scrape for entire data: ')
+            print('Keywords not included in last scrape for last 25 scrapes: ')
             print(missing_kws)
 
         matrix = []
 
         for shop in self.id_shops:
             active_data_for_shop = self.active[self.active.domain_pzn_id.str.contains('{0}_'.format(shop))]
-            inactive_data_for_shop = self.inactive[self.inactive.domain_pzn_id.str.contains('{0}_'.format(shop))]
-            inactive_keywords = inactive_data_for_shop['keyword_id'].unique()
+            # inactive_data_for_shop = self.inactive[self.inactive.domain_pzn_id.str.contains('{0}_'.format(shop))]
+            # inactive_keywords = inactive_data_for_shop['keyword_id'].unique()
             active_keywords = active_data_for_shop['keyword_id'].unique()
-            mask = np.in1d(inactive_keywords, active_keywords, invert=True)
-            num_missing = inactive_keywords[mask]
+            mask = np.in1d(self.keywords.id, active_keywords, invert=True)
+            num_missing = self.keywords[mask]
             matrix.append(np.array([int(shop), len(num_missing)]))
         missing_kws_for_all_shops = pd.DataFrame(matrix, columns=['shop_id', 'number_missing_kws'])
         print('Number of missing keywords by each shop.')
@@ -72,7 +77,8 @@ class KeywordsAnalysis:
             return
 
         print("Differnce in number of inserted product: {0} and by percentage {1}%".format(
-            (len(active_data_for_shop) - len(inactive_data_for_shop)), round(self.diffPerc(len(inactive_data_for_shop), len(active_data_for_shop)), 3)
+            (len(active_data_for_shop) - len(inactive_data_for_shop[inactive_data_for_shop.t_val_active == 1])),
+            round(self.diffPerc(len(inactive_data_for_shop[inactive_data_for_shop.t_val_active == 1]), len(active_data_for_shop)), 3)
         ))
         inactive_keywords = inactive_data_for_shop['keyword_id'].unique()
         active_keywords = active_data_for_shop['keyword_id'].unique()
@@ -82,9 +88,9 @@ class KeywordsAnalysis:
             (len(active_keywords) - len(inactive_keywords)),
             round(self.diffPerc(len(inactive_keywords), len(active_keywords)), 3)
         ))
-        mask = np.in1d(inactive_keywords, active_keywords, invert=True)
+        mask = np.in1d(self.keywords.id, active_keywords, invert=True)
 
-        missing_kws = self.keywords[self.keywords.id.isin(inactive_keywords[mask])][['id', 'keyword']]
+        missing_kws = self.keywords[mask][['id', 'keyword']]
         missing_kws = missing_kws.set_index(np.arange(len(missing_kws)))
         if missing_kws.empty:
             print('There is no missing keywords this time! Bravo Obade!!!11\n\n')
@@ -102,7 +108,9 @@ class KeywordsAnalysis:
             shop = int(shop)
             df = self.analysisByShop(shop)
             tmp = pd.DataFrame(np.full((len(df)), shop), columns=['shop_id'])
+            pom = pd.DataFrame(np.full((len(df)), self.domains.name[self.domains.id == shop]), columns=['shop_name'])
             extended = pd.concat([df, tmp], axis=1)
+            extended = pd.concat([extended, pom], axis=1)
             extended.to_excel(writer, startrow=starting_rows, index=False)
             starting_rows += len(df)+2
             writer.save()
