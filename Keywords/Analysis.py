@@ -8,10 +8,10 @@ class KeywordsAnalysis:
 
     def __init__(self):
         self.db = DB()
-        self.active = pd.DataFrame(self.db.getDataSmile(),  columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
+        self.active = pd.DataFrame(self.db.getKeywordsDataSmile(),  columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
                                                       't_val_to', 't_val_update', 't_val_del', 't_val_active',
                                                       'b_val_from', 'b_val_to'])
-        self.inactive = pd.DataFrame(self.db.getDataSmileTest(), columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
+        self.inactive = pd.DataFrame(self.db.getKeywordsDataSmileTest(), columns=['id', 'keyword_id', 'position', 'domain_pzn_id', 't_val_from',
                                                       't_val_to', 't_val_update', 't_val_del', 't_val_active',
                                                       'b_val_from', 'b_val_to'])
         self.dates = self.inactive['t_val_from'].dt.date.unique()
@@ -24,6 +24,10 @@ class KeywordsAnalysis:
         self.domains = pd.DataFrame(self.db.getDomains(), columns=['id', 'domain', 'name', 'keywords_link'])
 
     def overallNumber(self):
+
+        if self.active.empty:
+            print('Fresh data not available at the moment, please try later. Thank you!')
+            return False
         print("Differnce in number of inserted product: {0} and by percentage {1}%".format(
             (len(self.active)-len(self.inactive[self.inactive.t_val_active == 1])), round(self.diffPerc(len(self.inactive[self.inactive.t_val_active == 1]), len(self.active)), 3)
         ))

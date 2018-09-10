@@ -14,13 +14,13 @@ class DB:
         data = self.cursor.fetchall()
         return data
 
-    def getDataSmileTest(self):
+    def getKeywordsDataSmileTest(self):
         q = ('select * from keywords_data  where date(t_val_from) in (select * from (select date(t_val_from) as datum from keywords_data group by datum order by datum desc limit 2) as t)')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data
 
-    def getDataSmile(self):
+    def getKeywordsDataSmile(self):
         q = ('select * from scrapers_keywords_data')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
@@ -34,6 +34,18 @@ class DB:
 
     def getDomains(self):
         q = ('select id, domain, name, keywords_link from domains where t_val_active = 1')
+        self.cursor.execute(q)
+        data = self.cursor.fetchall()
+        return data
+
+    def getCategoryDataSmileTest(self):
+        q = ('select * from category  where date(t_val_from) in (select * from (select date(t_val_from) as datum from category group by datum order by datum desc limit 5) as t)')
+        self.cursor.execute(q)
+        data = self.cursor.fetchall()
+        return data
+
+    def getCategoryDataSmile(self):
+        q = ('select * from scrapers_category')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data
