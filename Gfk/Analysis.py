@@ -9,9 +9,12 @@ class GfkAnalysis:
     def __init__(self):
         self.db = DB()
         self.data = self.db.lastFive()
-        self.frame = pd.DataFrame(self.data, columns=['id', 'shop_id', 'pzn', 'position', 'placement', 'screenshot', 't_val_from',
+        self.frame = pd.DataFrame(self.data, columns=['id', 'shop_id', 'pzn', 'position', 'placement_id', 't_val_from',
                                             't_val_to', 't_val_update', 't_val_del', 't_val_active', 'b_val_from',
-                                            'b_val_to'])
+                                            'b_val_to', 'placement'])
+        self.placements = pd.DataFrame(self.db.lastFivePlacement(), columns=['id', 'shop_id', 'placement', 'marken',
+                                                                             'themen', 'link', 'screenshot_name',
+                                                                             't_val_from', 't_val_to', 't_val_active'])
 
     def overallNumber(self, shop_id):
         shop = self.frame[self.frame.shop_id == shop_id]
@@ -27,6 +30,8 @@ class GfkAnalysis:
         sum_active = len(active)
         count_by_date = np.array([len(inactive[inactive.t_val_from.dt.date == date]) for date in dates])
         diff_by_average = self.diffPerc(np.average(count_by_date), sum_active)
+        print('------------------------------------------')
+        print('Number of inserted products active: %d' % sum_active)
         print('------------------------------------------')
         print('Difference by average %f' % diff_by_average)
         print('------------------------------------------')
@@ -48,6 +53,7 @@ class GfkAnalysis:
 
     def placementAnalysis(self, shop_id):
         shop = self.frame[self.frame.shop_id == shop_id]
+        shop_placement = self.placements[self.placements.shop_id == shop_id]
         if shop.empty:
             print('No data available for that shop. Try again.\n\n')
             return
@@ -66,10 +72,14 @@ class GfkAnalysis:
                                             columns=['Number of placements'])
 
         preview_matrix = []
+        placement_matrix = []
         for date in shop['t_val_from'].dt.date.unique():
             preview_matrix.append([len(a) for a in [shop[(shop.placement == placement) & (shop.t_val_from.dt.date == date)] for placement in shop.placement.unique()]])
+            placement_matrix.append([len(a) for a in [shop_placement[(shop_placement.placement == placement) & (shop_placement.t_val_from.dt.date == date)] for placement in shop_placement.placement.unique()]])
 
         preview_frame = pd.DataFrame(preview_matrix, columns=[placement for placement in shop.placement.unique()],
+                                     index=[date for date in shop['t_val_from'].dt.date.unique()])
+        placement_frame = pd.DataFrame(placement_matrix, columns=[placement for placement in shop_placement.placement.unique()],
                                      index=[date for date in shop['t_val_from'].dt.date.unique()])
         matrix = preview_matrix[:-1]
         matrix = np.array(matrix)
@@ -80,11 +90,14 @@ class GfkAnalysis:
         diff_matrix = np.array(diff_matrix)
         diff_matrix[diff_matrix == inf] = 100.0
         diff_table = pd.DataFrame(diff_matrix, columns=[placement for placement in shop.placement.unique()], index=[date for date in dates])
-        print('======================> Current state for last 6 crawlers <======================')
+        print('======================> Current state for number of products in last 6 crawlers <======================')
         print(preview_frame)
         print('------------------------------------------')
         print('======================> Difference for fresh data for each of last 5 crawlers <======================')
         print(diff_table)
+        print('------------------------------------------')
+        print('======================> Current state for number of placements in last 6 crawlers <====================')
+        print(placement_frame)
         print('------------------------------------------')
         print('Number of placements for last 6 crawlers')
         print(num_placements_frame)

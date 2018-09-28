@@ -9,7 +9,13 @@ class DB:
         self.cursor = self.cnx.cursor()
 
     def lastFive(self):
-        q = ('select * from gkf_home_banners where date(t_val_from) in (select * from (select date(t_val_from) as datum from gkf_home_banners group by datum order by datum desc limit 6) as t)')
+        q = ('select b.*, p.placement from smile.wkz_home_banners_new b inner join smile.wkz_placements_new p on b.placement_id = p.id where date(b.t_val_from) in (select * from (select date(t_val_from) as datum from smile.wkz_home_banners_new group by datum order by datum desc limit 6) as t)')
+        self.cursor.execute(q)
+        data = self.cursor.fetchall()
+        return data
+
+    def lastFivePlacement(self):
+        q = ('select * from smile.wkz_placements_new where date(t_val_from) in (select * from (select date(t_val_from) as datum from smile.wkz_placements_new group by datum order by datum desc limit 6) as t)')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data

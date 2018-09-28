@@ -42,9 +42,6 @@ elif type == 'keywords':
         try:
             shop_id = int(shop_id)
         except ValueError:
-            export = input('Do you want to make an export for all shops? (y|n)')
-            if export == 'y':
-                a.exportExcel()
             print('Bye')
             break
     sys.exit(1)
@@ -63,12 +60,17 @@ elif type == 'category':
         try:
             shop_id = int(shop_id)
         except ValueError:
-            export = input('Do you want to make an export for all shops? (y|n) ')
-            if export == 'y':
-                a.exportExcel()
             print('Bye')
             break
     sys.exit(1)
+
+elif type == 'export_kws':
+    a = KeywordsAnalysis()
+    a.exportExcel()
+
+elif type == 'export_cat':
+    a = CategoryAnalysis()
+    a.exportExcel()
 
 else:
     raise ValueError('There is no such type of data analysis!')
