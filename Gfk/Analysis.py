@@ -8,24 +8,29 @@ class GfkAnalysis:
 
     def __init__(self):
         self.db = DB()
-        self.data = self.db.lastFive()
-        self.frame = pd.DataFrame(self.data, columns=['id', 'shop_id', 'pzn', 'position', 'placement_id', 't_val_from',
+        self.active_wkz = pd.DataFrame(self.db.getWkzDataSmile(), columns=['id', 'shop_id', 'pzn', 'position', 'placement_id', 't_val_from',
                                             't_val_to', 't_val_update', 't_val_del', 't_val_active', 'b_val_from',
                                             'b_val_to', 'placement'])
-        self.placements = pd.DataFrame(self.db.lastFivePlacement(), columns=['id', 'shop_id', 'placement', 'marken',
+        self.inactive_wkz = pd.DataFrame(self.db.getWkzDataSmileTest(), columns=['id', 'shop_id', 'pzn', 'position', 'placement_id', 't_val_from',
+                                            't_val_to', 't_val_update', 't_val_del', 't_val_active', 'b_val_from',
+                                            'b_val_to', 'placement'])
+        self.active_placements = pd.DataFrame(self.db.getPlacementSmile(), columns=['id', 'shop_id', 'placement', 'marken',
+                                                                             'themen', 'link', 'screenshot_name',
+                                                                             't_val_from', 't_val_to', 't_val_active'])
+        self.inactive_placements = pd.DataFrame(self.db.getFivePlacementSmileTest(), columns=['id', 'shop_id', 'placement', 'marken',
                                                                              'themen', 'link', 'screenshot_name',
                                                                              't_val_from', 't_val_to', 't_val_active'])
 
     def overallNumber(self, shop_id):
-        shop = self.frame[self.frame.shop_id == shop_id]
+        shop = self.inactive_wkz[self.inactive_wkz.shop_id == shop_id]
         if shop.empty:
             print('No data available for that shop. Try again.')
             return
-        active = shop[shop.t_val_active == 1]
+        active = self.active_wkz[self.active_wkz.shop_id == shop_id]
         if active.empty:
             print('Shop didn\'t start yet. Try again later.')
             return
-        inactive = shop[shop.t_val_active == 0]
+        inactive = self.inactive_wkz[self.inactive_wkz.shop_id == shop_id]
         dates = inactive['t_val_from'].dt.date.unique()
         sum_active = len(active)
         count_by_date = np.array([len(inactive[inactive.t_val_from.dt.date == date]) for date in dates])
@@ -52,16 +57,19 @@ class GfkAnalysis:
         print('------------------------------------------')
 
     def placementAnalysis(self, shop_id):
-        shop = self.frame[self.frame.shop_id == shop_id]
-        shop_placement = self.placements[self.placements.shop_id == shop_id]
+        shop = self.inactive_wkz[self.inactive_wkz.shop_id == shop_id]
+        inactive_placement = self.inactive_placements[self.inactive_placements.shop_id == shop_id]
+        active_placement = self.active_placements[self.active_placements.shop_id == shop_id]
+        shop_placement = pd.concat([inactive_placement, active_placement])
         if shop.empty:
             print('No data available for that shop. Try again.\n\n')
             return
-        active = shop[shop.t_val_active == 1]
+        active = self.active_wkz[self.active_wkz.shop_id == shop_id]
         if active.empty:
             print('Shop didn\'t start yet. Try again later.\n\n')
             return
-        inactive = shop[shop.t_val_active == 0]
+        inactive = self.inactive_wkz[self.inactive_wkz.shop_id == shop_id]
+        shop = pd.concat([inactive, active])
         dates = inactive['t_val_from'].dt.date.unique()
         num_placements_active = len(active.placement.unique())
         num_placements_by_date = np.array([len(inactive[inactive['t_val_from'].dt.date == date].placement.unique()) for date in dates])

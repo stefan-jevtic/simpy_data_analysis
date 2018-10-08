@@ -8,14 +8,26 @@ class DB:
                                            database='smile')
         self.cursor = self.cnx.cursor()
 
-    def lastFive(self):
-        q = ('select b.*, p.placement from smile.wkz_home_banners_new b inner join smile.wkz_placements_new p on b.placement_id = p.id where date(b.t_val_from) in (select * from (select date(t_val_from) as datum from smile.wkz_home_banners_new group by datum order by datum desc limit 6) as t)')
+    def getWkzDataSmileTest(self):
+        q = ('select b.*, p.placement from smile_test.wkz_home_banners_new b inner join smile_test.wkz_placements_new p on b.placement_id = p.id where date(b.t_val_from) in (select * from (select date(t_val_from) as datum from smile_test.wkz_home_banners_new group by datum order by datum desc limit 5) as t)')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data
 
-    def lastFivePlacement(self):
-        q = ('select * from smile.wkz_placements_new where date(t_val_from) in (select * from (select date(t_val_from) as datum from smile.wkz_placements_new group by datum order by datum desc limit 6) as t)')
+    def getWkzDataSmile(self):
+        q = ('select b.*, p.placement from smile.wkz_home_banners_new b inner join smile.wkz_placements_new p on b.placement_id = p.id')
+        self.cursor.execute(q)
+        data = self.cursor.fetchall()
+        return data
+
+    def getFivePlacementSmileTest(self):
+        q = ('select * from smile_test.wkz_placements_new where date(t_val_from) in (select * from (select date(t_val_from) as datum from smile_test.wkz_placements_new group by datum order by datum desc limit 5) as t)')
+        self.cursor.execute(q)
+        data = self.cursor.fetchall()
+        return data
+
+    def getPlacementSmile(self):
+        q = ('select * from smile.wkz_placements_new')
         self.cursor.execute(q)
         data = self.cursor.fetchall()
         return data
