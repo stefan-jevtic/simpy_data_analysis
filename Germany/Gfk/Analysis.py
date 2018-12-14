@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from numpy import inf
-from Server.DB import DB
+from Germany.Server.DB import DB
 
 
 class GfkAnalysis:

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pandas import ExcelWriter
-from Server.DB import DB
+from Germany.Server.DB import DB
 pd.set_option('max_colwidth', 400)
 
 
